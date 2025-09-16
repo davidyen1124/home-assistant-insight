@@ -10,7 +10,7 @@ const {
  * Fetches the history of a specific entity from Home Assistant for a given number of days.
  *
  * @param {string} entityId - The ID of the entity to fetch history for.
- * @param {number} [days=1] - The number of days of history to fetch.
+ * @param {number} [days=1] - The number of days of history to fetch, inclusive of the current day.
  * @returns {Promise<Array>} - A promise that resolves to the entity history data.
  */
 async function fetchEntityHistory(entityId, days = 1) {
@@ -20,8 +20,8 @@ async function fetchEntityHistory(entityId, days = 1) {
   // Set endTime to the end of today (23:59:59.999) in the specified timezone
   const endDate = now.endOf('day')
 
-  // Set startTime to the start of the day 'days' days ago (00:00:00.000) in the specified timezone
-  const startDate = endDate.minus({ days: days }).startOf('day')
+  // Set startTime to the start of the day so the range covers the requested number of days inclusively
+  const startDate = endDate.minus({ days: Math.max(days - 1, 0) }).startOf('day')
 
   // Format the dates in ISO format with the correct timezone offset
   const startTime = startDate.toISO()
