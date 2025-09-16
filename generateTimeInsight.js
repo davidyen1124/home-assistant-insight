@@ -24,8 +24,23 @@ async function main() {
     const evaluations = await Promise.all(
       insightVersions.map(async (insight) => {
         const scores = await evaluateInsight(insight)
-        const averageScore =
-          scores.reduce((sum, score) => sum + score.score, 0) / scores.length
+
+        const { sum, count } = scores.reduce(
+          (accumulator, score) => {
+            const numericScore = Number(score.score)
+
+            if (Number.isFinite(numericScore)) {
+              accumulator.sum += numericScore
+              accumulator.count += 1
+            }
+
+            return accumulator
+          },
+          { sum: 0, count: 0 }
+        )
+
+        const averageScore = count > 0 ? sum / count : 0
+
         return {
           insight,
           averageScore,
