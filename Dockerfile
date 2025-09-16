@@ -12,3 +12,6 @@ RUN npm install
 
 # Copy the rest of the application code
 COPY . .
+
+# Set the default command to run the Nest insight generator
+CMD ["node", "generateNestInsight.js"]
