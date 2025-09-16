@@ -50,7 +50,7 @@ To generate insights for home management, run the following commands:
    ```
 
 ## Configuration
-You can customize the behavior of the application by modifying the `config.js` file. This includes setting up entity IDs, adjusting time ranges, and configuring judge personalities for insight evaluation.
+You can customize the behavior of the application by modifying the `config.js` file. This includes setting up entity IDs, adjusting time ranges, and configuring judge personalities for insight evaluation. When adjusting time ranges, remember that the `days` argument passed to `fetchEntityHistory` is inclusive—for example, requesting `3` days returns data for today and the previous two days.
 
 ## Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
