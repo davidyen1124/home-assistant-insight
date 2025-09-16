@@ -11,7 +11,7 @@ Home Assistant Insights is a Node.js application that analyzes data from Home As
 - Sends insights to Slack for easy sharing and collaboration
 
 ## Prerequisites
-- Node.js (v14 or later recommended)
+- Node.js (v22 or later recommended)
 - Home Assistant instance with API access
 - OpenAI API key
 - Slack webhook URL (for sending insights to Slack)
@@ -46,7 +46,7 @@ To generate insights for home management, run the following commands:
 
 2. For generating time insights:
    ```bash
-   node generateTimeInsights.js
+   node generateTimeInsight.js
    ```
 
 ## Configuration
