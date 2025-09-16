@@ -67,8 +67,12 @@ function filterLastEventOfDay(data) {
       const startOfDay = dateTime.startOf('day').toISO()
       const state = parseFloat(item.state)
 
+      if (!Number.isFinite(state)) {
+        return acc
+      }
+
       // Store the maximum state for each startOfDay
-      if (!acc[startOfDay] || state > acc[startOfDay]) {
+      if (acc[startOfDay] === undefined || state > acc[startOfDay]) {
         acc[startOfDay] = state
       }
       return acc
@@ -80,9 +84,11 @@ function filterLastEventOfDay(data) {
     const weekday = dateTime.weekdayLong
     const formattedDate = dateTime.toISODate()
 
+    const value = result[isoString]
+
     return {
       date: `${formattedDate} (${weekday})`,
-      hours: result[isoString].toFixed(2)
+      hours: Number.isFinite(value) ? value.toFixed(2) : '0.00'
     }
   })
 }
