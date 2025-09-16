@@ -14,13 +14,13 @@ async function main() {
       const upstairsInsights = await generateNestInsights(
         filteredUpstairsHvacEvents
       )
-      sendInsightsToSlack('Nest report for upstairs', upstairsInsights)
+      await sendInsightsToSlack('Nest report for upstairs', upstairsInsights)
     }
     if (filteredDownstairsHvacEvents.length) {
       const downstairsInsights = await generateNestInsights(
         filteredDownstairsHvacEvents
       )
-      sendInsightsToSlack('Nest report for downstairs', downstairsInsights)
+      await sendInsightsToSlack('Nest report for downstairs', downstairsInsights)
     }
     console.log('Insights sent to Slack successfully!')
   } catch (error) {
