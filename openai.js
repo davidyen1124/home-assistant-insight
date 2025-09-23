@@ -7,6 +7,63 @@ const openai = new OpenAI({
 })
 
 /**
+ * Extracts plain text content from a Responses API result.
+ *
+ * @param {import('openai/resources/responses/responses').Response} response
+ * @returns {string}
+ */
+function extractTextOutput(response) {
+  if (!response) {
+    return ''
+  }
+
+  if (typeof response.output_text === 'string' && response.output_text.trim()) {
+    return response.output_text.trim()
+  }
+
+  const outputItems = Array.isArray(response.output) ? response.output : []
+  const collectedText = []
+
+  for (const item of outputItems) {
+    if (item.type === 'message' && Array.isArray(item.content)) {
+      for (const part of item.content) {
+        if (part.type === 'output_text' && typeof part.text === 'string') {
+          collectedText.push(part.text)
+        }
+      }
+    }
+  }
+
+  return collectedText.join('\n').trim()
+}
+
+/**
+ * Retrieves and parses the arguments for a named function call output.
+ *
+ * @param {import('openai/resources/responses/responses').Response} response
+ * @param {string} functionName
+ * @returns {any}
+ */
+function parseFunctionCallArguments(response, functionName) {
+  const outputItems = Array.isArray(response?.output) ? response.output : []
+  const functionCall = outputItems.find(
+    (item) => item.type === 'function_call' && item.name === functionName
+  )
+
+  if (!functionCall) {
+    throw new Error(`Function call "${functionName}" not found in model response.`)
+  }
+
+  try {
+    return JSON.parse(functionCall.arguments)
+  } catch (error) {
+    throw new Error(
+      `Unable to parse arguments for function call "${functionName}": ${error.message}`
+    )
+  }
+}
+
+/**
  * Evaluates an insight using all judge personalities.
  *
  * @param {string} insight - The insight to be evaluated.
@@ -35,49 +92,42 @@ async function evaluateInsight(insight) {
       
       Remember to consider the specific focus provided when evaluating the insight. Ensure your score accurately reflects your written evaluation.`
 
-      const response = await openai.chat.completions.create({
+      const response = await openai.responses.create({
         model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an AI assistant that evaluates insights and provides scores.'
-          },
-          { role: 'user', content: prompt }
-        ],
+        instructions:
+          'You are an AI assistant that evaluates insights and provides scores.',
+        input: prompt,
         tools: [
           {
             type: 'function',
-            function: {
-              name: 'provide_evaluation_and_score',
-              description:
-                'Provide an evaluation and score for the given insight',
-              parameters: {
-                type: 'object',
-                properties: {
-                  evaluation: {
-                    type: 'string',
-                    description:
-                      'A detailed evaluation of the insight (1-2 sentences)'
-                  },
-                  score: {
-                    type: 'number',
-                    description: 'A numerical score between 0 and 10'
-                  }
+            name: 'provide_evaluation_and_score',
+            description: 'Provide an evaluation and score for the given insight',
+            parameters: {
+              type: 'object',
+              properties: {
+                evaluation: {
+                  type: 'string',
+                  description: 'A detailed evaluation of the insight (1-2 sentences)'
                 },
-                required: ['evaluation', 'score']
-              }
-            }
+                score: {
+                  type: 'number',
+                  description: 'A numerical score between 0 and 10'
+                }
+              },
+              required: ['evaluation', 'score']
+            },
+            strict: true
           }
         ],
         tool_choice: {
           type: 'function',
-          function: { name: 'provide_evaluation_and_score' }
+          name: 'provide_evaluation_and_score'
         }
       })
 
-      const result = JSON.parse(
-        response.choices[0].message.tool_calls[0].function.arguments
+      const result = parseFunctionCallArguments(
+        response,
+        'provide_evaluation_and_score'
       )
       return {
         judge: judgePersonality.name,
@@ -134,19 +184,15 @@ async function generateNestInsights(filteredData, weatherData) {
 
   Remember to focus on creating actionable, energy-saving recommendations based on the provided HVAC data. Do not include any personal opinions or information not derived from the given data.`
 
-  const response = await openai.chat.completions.create({
+  const response = await openai.responses.create({
     model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'Analyze active HVAC events for the Nest and provide actionable items.'
-      },
-      { role: 'user', content: prompt }
-    ],
+    instructions:
+      'Analyze active HVAC events for the Nest and provide actionable items.',
+    input: prompt,
     temperature: 0.7
   })
-  return response.choices[0].message.content.trim()
+
+  return extractTextOutput(response)
 }
 
 /**
@@ -198,18 +244,14 @@ async function generateWorkHomeInsights(workData, homeData) {
 
   Remember to keep each insight under 100 words and ensure they are directly related to the provided data.`
 
-  const response = await openai.chat.completions.create({
+  const response = await openai.responses.create({
     model: MODEL,
-    messages: [
-      {
-        role: 'system',
-        content: 'Analyze work, home data and provide insights.'
-      },
-      { role: 'user', content: prompt }
-    ],
+    instructions: 'Analyze work, home data and provide insights.',
+    input: prompt,
     temperature: 0.7
   })
-  return response.choices[0].message.content.trim()
+
+  return extractTextOutput(response)
 }
 
 module.exports = {
